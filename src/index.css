@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Pretendard", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-purple: #8b5cf6;
+  --color-brand-purple-dark: #6d28d9;
+  --color-brand-black: #0a0a0a;
+  --color-brand-dark-gray: #171717;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-black text-white antialiased;
+  }
+}
+
+.glass-effect {
+  @apply bg-white/5 backdrop-blur-lg border border-white/10;
+}
+
+.purple-gradient {
+  @apply bg-gradient-to-br from-brand-purple to-brand-purple-dark;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-purple to-purple-300;
+}
+
+@keyframes fog {
+  0% { transform: translateX(-10%) translateY(0); opacity: 0.3; }
+  50% { transform: translateX(10%) translateY(-2%); opacity: 0.5; }
+  100% { transform: translateX(-10%) translateY(0); opacity: 0.3; }
+}
+
+.animate-fog {
+  animation: fog 30s ease-in-out infinite;
+}

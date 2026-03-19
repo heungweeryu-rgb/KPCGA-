@@ -9,7 +9,7 @@ import {
   Users, Bell, LogOut, Plus, Edit2, Trash2, Search, 
   Instagram, Facebook, MessageCircle, Share2, Award, 
   BookOpen, Heart, Shield, ArrowUpRight, BarChart3,
-  CheckCircle2, Clock, MapPin, Phone, Mail
+  CheckCircle2, Clock, MapPin, Phone, Mail, ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from './lib/supabase';
@@ -994,6 +994,14 @@ const Footer = () => (
             <li className="flex items-center gap-3"><Phone size={16} /> 031-566-1318</li>
             <li className="flex items-center gap-3"><Mail size={16} /> hap3clover@hanmail.net</li>
           </ul>
+          <div className="mt-8 pt-8 border-t border-white/5">
+            <button 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="text-[10px] text-gray-600 hover:text-brand-purple transition-colors uppercase tracking-widest font-bold"
+            >
+              Admin Access
+            </button>
+          </div>
         </div>
       </div>
       
@@ -1195,16 +1203,25 @@ const AdminDashboard = ({
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-8">
         <header className="flex justify-between items-center mb-10">
-          <div>
-            <h1 className="text-2xl font-bold mb-1">
-              {activeTab === 'overview' && '대시보드 현황'}
-              {activeTab === 'consultations' && '상담 신청 관리'}
-              {activeTab === 'posts' && '게시글 관리'}
-              {activeTab === 'photos' && '사진 자료실 관리'}
-              {activeTab === 'users' && '회원 관리'}
-              {activeTab === 'settings' && '사이트 설정'}
-            </h1>
-            <p className="text-sm text-gray-500">환영합니다, 관리자님. 오늘의 사이트 현황입니다.</p>
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={onBack}
+              className="p-3 rounded-2xl glass-effect text-gray-400 hover:text-white transition-all"
+              title="사이트로 돌아가기"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold mb-1">
+                {activeTab === 'overview' && '대시보드 현황'}
+                {activeTab === 'consultations' && '상담 신청 관리'}
+                {activeTab === 'posts' && '게시글 관리'}
+                {activeTab === 'photos' && '사진 자료실 관리'}
+                {activeTab === 'users' && '회원 관리'}
+                {activeTab === 'settings' && '사이트 설정'}
+              </h1>
+              <p className="text-sm text-gray-500">환영합니다, 관리자님. 오늘의 사이트 현황입니다.</p>
+            </div>
           </div>
           
           <div className="flex items-center gap-4">
@@ -1484,6 +1501,75 @@ const AdminDashboard = ({
                   <p className="text-[10px] text-gray-500 text-center">{photo.date}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="회원 검색..." 
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-brand-purple"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button className="px-4 py-2 rounded-xl bg-brand-purple text-white text-xs font-bold">전체 회원</button>
+                <button className="px-4 py-2 rounded-xl glass-effect text-gray-400 text-xs font-bold">관리자</button>
+              </div>
+            </div>
+
+            <div className="rounded-3xl glass-effect overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-white/5 text-xs text-gray-500 uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">이메일</th>
+                    <th className="px-6 py-4 font-medium">가입일</th>
+                    <th className="px-6 py-4 font-medium">상태</th>
+                    <th className="px-6 py-4 font-medium">권한</th>
+                    <th className="px-6 py-4 font-medium text-right">관리</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  <tr className="hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-bold">heungweeryu@gmail.com</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-400">2024-03-01</td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 rounded-lg bg-green-500/20 text-green-500 text-[10px] font-bold uppercase">Active</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 rounded-lg bg-brand-purple/20 text-brand-purple text-[10px] font-bold uppercase">Admin</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400">
+                        <Edit2 size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-bold">user@example.com</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-400">2024-03-15</td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 rounded-lg bg-green-500/20 text-green-500 text-[10px] font-bold uppercase">Active</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 rounded-lg bg-white/10 text-gray-400 text-[10px] font-bold uppercase">User</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400">
+                        <Edit2 size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -1796,6 +1882,21 @@ export default function App() {
 
   const isAdminUser = user?.email === 'heungweeryu@gmail.com';
 
+  const AdminBanner = ({ onEnterAdmin }: { onEnterAdmin: () => void }) => (
+    <div className="bg-brand-purple/10 border-b border-brand-purple/20 py-2 px-6 flex items-center justify-between">
+      <div className="flex items-center gap-2 text-xs font-medium text-brand-purple">
+        <Shield size={14} />
+        <span>관리자 권한으로 접속 중입니다.</span>
+      </div>
+      <button 
+        onClick={onEnterAdmin}
+        className="text-xs font-bold text-brand-purple hover:underline"
+      >
+        관리자 모드 진입 →
+      </button>
+    </div>
+  );
+
   // Scroll to top on route change
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -1815,6 +1916,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
+      {isAdminUser && !isAdmin && <AdminBanner onEnterAdmin={() => setIsAdmin(true)} />}
       {/* SEO Meta Tags (Handled by component structure) */}
       <Navbar 
         onAdminClick={() => setIsAdmin(true)} 

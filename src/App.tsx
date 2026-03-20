@@ -595,6 +595,7 @@ const Programs = () => (
           { title: '개인 심리 상담', desc: '우울, 불안, 대인관계 등 개인의 내면적 갈등을 해결하고 자아 성장을 돕습니다.', icon: Users, color: 'from-purple-500 to-indigo-500' },
           { title: '부부 및 가족 상담', desc: '가족 구성원 간의 소통 부재와 갈등을 해소하고 건강한 관계 회복을 지원합니다.', icon: Heart, color: 'from-pink-500 to-rose-500' },
           { title: '청소년 상담', desc: '학업 스트레스, 진로 고민, 사춘기 갈등 등 청소년기의 특수한 고민을 함께 나눕니다.', icon: BookOpen, color: 'from-emerald-500 to-teal-500' },
+          { title: 'K5(KTDRI)상담', desc: 'K5(KTDRI) 검사를 통해 개인의 성격 유형과 심리 상태를 정밀하게 분석하고 맞춤형 해결책을 제시합니다.', icon: Award, color: 'from-indigo-600 to-blue-600' },
           { title: 'META-상담', desc: '메타인지 기반의 상담을 통해 자신의 사고 과정을 객관화하고 근본적인 변화를 이끌어냅니다.', icon: BarChart3, color: 'from-blue-500 to-cyan-500' },
           { title: '드론 우울 상담', desc: '드론 기술과 심리 상담을 결합하여 새로운 시각에서 우울감을 해소하는 혁신적인 프로그램입니다.', icon: Share2, color: 'from-orange-500 to-amber-500' },
         ].map((item, i) => (
@@ -716,6 +717,7 @@ const CounselingForm = () => {
                   <option>개인 심리 상담</option>
                   <option>부부 및 가족 상담</option>
                   <option>청소년 상담</option>
+                  <option>K5(KTDRI)상담</option>
                   <option>META-상담</option>
                   <option>드론 우울 상담</option>
                   <option>기타</option>
@@ -936,7 +938,7 @@ const Blog = ({ posts }: { posts: Post[] }) => (
   </section>
 );
 
-const Footer = () => (
+const Footer = ({ onAdminClick }: { onAdminClick: () => void }) => (
   <footer className="bg-brand-black pt-20 pb-10 border-t border-white/5">
     <div className="container mx-auto px-6">
       <div className="grid md:grid-cols-4 gap-12 mb-20">
@@ -996,7 +998,7 @@ const Footer = () => (
           </ul>
           <div className="mt-8 pt-8 border-t border-white/5">
             <button 
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              onClick={onAdminClick}
               className="text-[10px] text-gray-600 hover:text-brand-purple transition-colors uppercase tracking-widest font-bold"
             >
               Admin Access
@@ -1034,6 +1036,7 @@ const AdminDashboard = ({
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isAdding, setIsAdding] = useState(false);
+  const [isAddingConsultation, setIsAddingConsultation] = useState(false);
   const [addType, setAddType] = useState<'post' | 'photo'>('post');
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editingPhoto, setEditingPhoto] = useState<PhotoPost | null>(null);
@@ -1061,6 +1064,32 @@ const AdminDashboard = ({
       console.error('Error fetching consultations:', error);
     } finally {
       setLoadingConsultations(false);
+    }
+  };
+
+  const handleSaveConsultation = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newConsultation = {
+      name: formData.get('name') as string,
+      phone: formData.get('phone') as string,
+      category: formData.get('category') as string,
+      content: formData.get('content') as string,
+      status: 'pending'
+    };
+
+    try {
+      const { data, error } = await supabase
+        .from('consultations')
+        .insert([newConsultation])
+        .select();
+
+      if (error) throw error;
+      setConsultations([data[0], ...consultations]);
+      setIsAddingConsultation(false);
+    } catch (error) {
+      console.error('Error saving consultation:', error);
+      alert('상담 내역 등록 중 오류가 발생했습니다.');
     }
   };
 
@@ -1262,8 +1291,69 @@ const AdminDashboard = ({
                 </div>
               ))}
             </div>
+
+            <div className="grid grid-cols-3 gap-6">
+              <button 
+                onClick={() => { setActiveTab('posts'); setAddType('post'); setIsAdding(true); }} 
+                className="p-8 rounded-[32px] glass-effect flex flex-col items-center gap-4 hover:bg-brand-purple/10 transition-all border border-white/5 group"
+              >
+                <div className="p-4 rounded-2xl bg-brand-purple/10 text-brand-purple group-hover:scale-110 transition-transform">
+                  <Plus size={32} />
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">공지사항 작성</div>
+                  <p className="text-xs text-gray-500 mt-1">새로운 소식을 등록합니다.</p>
+                </div>
+              </button>
+              <button 
+                onClick={() => { setActiveTab('photos'); setAddType('photo'); setIsAdding(true); }} 
+                className="p-8 rounded-[32px] glass-effect flex flex-col items-center gap-4 hover:bg-brand-purple/10 transition-all border border-white/5 group"
+              >
+                <div className="p-4 rounded-2xl bg-brand-purple/10 text-brand-purple group-hover:scale-110 transition-transform">
+                  <Instagram size={32} />
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">사진 업로드</div>
+                  <p className="text-xs text-gray-500 mt-1">활동 사진을 추가합니다.</p>
+                </div>
+              </button>
+              <button 
+                onClick={() => setIsAddingConsultation(true)} 
+                className="p-8 rounded-[32px] glass-effect flex flex-col items-center gap-4 hover:bg-brand-purple/10 transition-all border border-white/5 group"
+              >
+                <div className="p-4 rounded-2xl bg-brand-purple/10 text-brand-purple group-hover:scale-110 transition-transform">
+                  <MessageCircle size={32} />
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-lg">상담 내역 등록</div>
+                  <p className="text-xs text-gray-500 mt-1">수동으로 상담을 등록합니다.</p>
+                </div>
+              </button>
+            </div>
             
             <div className="grid grid-cols-2 gap-6">
+              <div className="p-8 rounded-[32px] glass-effect">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-bold">최근 업데이트 내역</h3>
+                  <span className="px-2 py-1 rounded-lg bg-brand-purple/20 text-brand-purple text-[10px] font-bold">NEW</span>
+                </div>
+                <div className="space-y-4">
+                  {[
+                    { title: '상담 내역 수동 등록 기능 추가', date: '2024-03-19', desc: '관리자가 직접 상담 신청을 등록할 수 있습니다.' },
+                    { title: '회원 관리 시스템 구축', date: '2024-03-19', desc: '전체 회원 목록 및 권한 관리가 가능합니다.' },
+                    { title: '대시보드 퀵 액션 버튼 도입', date: '2024-03-19', desc: '홈 화면에서 즉시 주요 작업을 수행할 수 있습니다.' },
+                    { title: '관리자 전용 배너 및 접근성 개선', date: '2024-03-19', desc: '사이트 어디서든 관리자 모드로 빠른 진입이 가능합니다.' },
+                  ].map((update, i) => (
+                    <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/5">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="text-sm font-bold text-brand-purple">{update.title}</div>
+                        <span className="text-[10px] text-gray-500">{update.date}</span>
+                      </div>
+                      <p className="text-xs text-gray-400">{update.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div className="p-8 rounded-[32px] glass-effect">
                 <h3 className="font-bold mb-6">최근 상담 예약</h3>
                 <div className="space-y-4">
@@ -1319,12 +1409,20 @@ const AdminDashboard = ({
                   className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-brand-purple"
                 />
               </div>
-              <button 
-                onClick={fetchConsultations}
-                className="px-5 py-2 rounded-xl glass-effect text-white text-sm font-bold flex items-center gap-2"
-              >
-                새로고침
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setIsAddingConsultation(true)}
+                  className="px-5 py-2 rounded-xl purple-gradient text-white text-sm font-bold flex items-center gap-2"
+                >
+                  <Plus size={18} /> 수동 등록
+                </button>
+                <button 
+                  onClick={fetchConsultations}
+                  className="px-5 py-2 rounded-xl glass-effect text-white text-sm font-bold flex items-center gap-2"
+                >
+                  새로고침
+                </button>
+              </div>
             </div>
 
             <div className="rounded-3xl glass-effect overflow-hidden">
@@ -1625,6 +1723,62 @@ const AdminDashboard = ({
 
       {/* Post/Photo Editor Modal */}
       <AnimatePresence>
+        {isAddingConsultation && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddingConsultation(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-xl bg-brand-dark-gray rounded-[40px] p-10 border border-white/10 shadow-2xl"
+            >
+              <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                <MessageCircle className="text-brand-purple" />
+                상담 내역 수동 등록
+              </h2>
+              
+              <form onSubmit={handleSaveConsultation} className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">신청자 성함</label>
+                    <input name="name" required className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-brand-purple" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">연락처</label>
+                    <input name="phone" required placeholder="010-0000-0000" className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-brand-purple" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">상담 분야</label>
+                  <select name="category" className="w-full px-4 py-3 rounded-xl bg-brand-black border border-white/10 focus:outline-none focus:border-brand-purple">
+                    <option>개인 심리 상담</option>
+                    <option>부부 및 가족 상담</option>
+                    <option>청소년 상담</option>
+                    <option>K5(KTDRI)상담</option>
+                    <option>META-상담</option>
+                    <option>드론 우울 상담</option>
+                    <option>기타</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">상담 내용</label>
+                  <textarea name="content" rows={4} className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-brand-purple resize-none" />
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <button type="button" onClick={() => setIsAddingConsultation(false)} className="flex-1 py-4 rounded-2xl glass-effect font-bold">취소</button>
+                  <button type="submit" className="flex-1 py-4 rounded-2xl purple-gradient text-white font-bold">등록하기</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
         {isAdding && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div 
@@ -1940,7 +2094,15 @@ export default function App() {
         <Blog posts={posts} />
       </main>
 
-      <Footer />
+      <Footer onAdminClick={() => {
+        if (isAdminUser) {
+          setIsAdmin(true);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setAuthMode('login');
+          setIsAuthModalOpen(true);
+        }
+      }} />
       
       <AuthModal 
         isOpen={isAuthModalOpen} 

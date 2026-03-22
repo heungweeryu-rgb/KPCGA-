@@ -1,251 +1,349 @@
-import React, { useState } from 'react';
-import { 
-  Users, 
-  History, 
-  Info, 
-  MessageCircle, 
-  Calendar, 
-  LayoutDashboard, 
-  ChevronRight, 
-  Menu,
-  X,
-  PlusCircle,
-  LogOut
-} from 'lucide-react';
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-// --- 전역 데이터 (협회 정보) ---
-const ASSOCIATION_INFO = {
-  about: "한국심리상담지도협회는 전문적인 상담과 체계적인 교육을 통해 당신의 삶에 따뜻한 변화를 선물합니다. 우리는 1,900여 명의 회원과 전문인력을 보유한 심리상담 전문가 단체로 발전하였습니다.",
-  greeting: "2007년 3월 실무이사 7명, 심리상담 전공교수 15명 등 22명이 발기인대회를 갖고 창립총회를 연 것이 엊그제 같은데 이제는 당당한 전문가 그룹으로 성장했습니다. 회원 여러분께 심심한 존경과 감사의 말씀을 드립니다.",
-  history: [
-    { year: "2024", event: "청소년상담심리학회 및 한국청소년보호연맹 전략적 제휴" },
-    { year: "2014", event: "연구 성과물 교류 협력 및 심리상담 전문가 양성 과정 개설" },
-    { year: "2007", event: "한국심리상담지도협회 창립총회 및 발기인대회" }
-  ]
+import React, { useState, useEffect } from 'react';
+import { 
+  ChevronRight, Users, LogOut, MessageCircle, Share2, Award, 
+  BookOpen, Heart, BarChart3, CheckCircle2, Target, Flag, 
+  Calendar, ShieldCheck, UserCheck, Shield
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+
+// --- Supabase Mock (오류 방지용) ---
+const supabase: any = {
+  from: () => ({
+    insert: async () => ({ error: null }),
+  }),
+  auth: {
+    getSession: async () => ({ data: { session: null } }),
+    onAuthStateChange: (cb: any) => ({ data: { subscription: { unsubscribe: () => {} } } }),
+    signOut: async () => {},
+  }
 };
 
-const App = () => {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [isAdmin, setIsAdmin] = useState(false);
+// --- Components ---
 
-  // 네비게이션 컴포넌트
-  const Navbar = () => (
-    <nav className="bg-slate-900 text-white p-4 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentPage('home')}>
-          <div className="bg-purple-600 p-2 rounded-lg">
-            <Users size={20} />
+const Navbar = ({ user, onLogout, isAdminUser, onAdminClick }: any) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const menuItems = [
+    { name: '협회소개', href: '#협회소개' },
+    { name: '인사말', href: '#인사말' },
+    { name: '상담신청', href: '#상담신청' },
+    { name: '교육과정', href: '#교육과정' },
+    { name: '게시판', href: '#게시판' },
+  ];
+
+  return (
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-brand-black/95 backdrop-blur-md py-4 shadow-lg' : 'bg-transparent py-6'}`}>
+      <div className="container mx-auto px-6 flex justify-between items-center">
+        {/* 좌측 상단 협회 로고 */}
+        <a href="/" className="flex items-center">
+          <div className="bg-white p-1 rounded-sm shadow-sm">
+             <img 
+              src="/logo.png" 
+              alt="한국심리상담지도협회 로고" 
+              className="h-10 md:h-12 w-auto object-contain" 
+              onError={(e) => {
+                e.currentTarget.src = 'https://via.placeholder.com/180x50?text=KPCGA+LOGO';
+              }}
+            />
           </div>
-          <span className="font-bold text-lg">한국심리상담지도협회</span>
-        </div>
-        
-        <div className="hidden md:flex gap-6 text-sm font-medium">
-          <button onClick={() => setCurrentPage('about')} className="hover:text-purple-400">협회소개</button>
-          <button onClick={() => setCurrentPage('greeting')} className="hover:text-purple-400">인사말</button>
-          <button onClick={() => setCurrentPage('history')} className="hover:text-purple-400">연혁</button>
-          <button onClick={() => setCurrentPage('program')} className="hover:text-purple-400">상담프로그램</button>
-          <button onClick={() => setCurrentPage('board')} className="hover:text-purple-400">게시판</button>
-        </div>
+        </a>
 
-        <div className="flex gap-2">
-          {!isAdmin ? (
+        {/* 중앙 메뉴 및 우측 버튼 섹션 */}
+        <div className="hidden md:flex items-center gap-6 lg:gap-8">
+          <div className="flex items-center gap-6 lg:gap-8 mr-4">
+            {menuItems.map((item) => (
+              <a key={item.name} href={item.href} className="text-sm font-medium text-gray-300 hover:text-brand-purple transition-colors whitespace-nowrap">{item.name}</a>
+            ))}
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {user ? (
+              <button onClick={onLogout} className="text-xs text-gray-400 flex items-center gap-2 hover:text-white transition-colors mr-2"><LogOut size={14}/>로그아웃</button>
+            ) : (
+              <button className="text-sm text-white bg-brand-purple px-5 py-2 rounded-full font-bold hover:brightness-110 transition-all shadow-lg shadow-purple-500/20 whitespace-nowrap">로그인</button>
+            )}
+            
+            {/* 관리자 버튼 (로그인 버튼 옆에 추가) */}
             <button 
-              onClick={() => setIsAdmin(true)} 
-              className="bg-purple-600 px-4 py-2 rounded-full text-xs hover:bg-purple-700 transition"
+              onClick={onAdminClick} 
+              className="text-sm text-white purple-gradient px-5 py-2 rounded-full font-bold hover:brightness-110 transition-all shadow-lg shadow-purple-600/30 flex items-center gap-2 whitespace-nowrap"
             >
-              관리자 로그인
+              <Shield size={14} />
+              관리자
             </button>
-          ) : (
-            <button 
-              onClick={() => setIsAdmin(false)} 
-              className="bg-gray-700 px-4 py-2 rounded-full text-xs flex items-center gap-1"
-            >
-              <LogOut size={14} /> 로그아웃
-            </button>
-          )}
+          </div>
         </div>
       </div>
     </nav>
   );
+};
 
-  // --- 페이지 컴포넌트들 ---
-
-  const HomePage = () => (
-    <div className="relative">
-      <div className="h-[600px] bg-cover bg-center flex items-center text-white relative" 
-           style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80')` }}>
-        <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-5xl font-bold mb-6 leading-tight">
-            회원여러분의 풍부한 경험과<br/>
-            <span className="text-purple-400">전문지식을 결집하여</span>
-          </h1>
-          <p className="max-w-2xl text-lg text-gray-300 mb-8 leading-relaxed">
-            {ASSOCIATION_INFO.about}
-          </p>
-          <div className="flex gap-4">
-            <button className="bg-purple-600 px-8 py-3 rounded-xl font-bold hover:bg-purple-700">지금 상담 신청하기</button>
-            <button onClick={() => setCurrentPage('program')} className="bg-white/10 backdrop-blur-md border border-white/20 px-8 py-3 rounded-xl font-bold hover:bg-white/20 transition">프로그램 보기</button>
-          </div>
+const Hero = () => (
+  <section className="relative h-[85vh] flex items-center bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=2000')" }}>
+    <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40 z-0" />
+    <div className="container mx-auto px-6 relative z-10">
+      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+        <h1 className="text-5xl md:text-8xl font-bold text-white leading-tight mb-8">마음의 평온을 찾는<br/><span className="text-brand-purple">새로운 시작</span></h1>
+        <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl font-light leading-relaxed">한국심리상담지도협회는 전문적인 상담과 체계적인 교육을 통해 당신의 삶에 따뜻한 변화를 선물합니다.</p>
+        <div className="flex flex-wrap gap-5">
+          <a href="#상담신청" className="px-10 py-5 bg-brand-purple text-white font-bold rounded-2xl shadow-2xl hover:scale-105 transition-transform text-lg">지금 상담 신청하기</a>
+          <a href="#교육과정" className="px-10 py-5 glass-effect text-white font-bold rounded-2xl hover:bg-white/10 transition-all text-lg border border-white/20">프로그램 보기</a>
         </div>
+      </motion.div>
+    </div>
+  </section>
+);
+
+const GreetingsSection = () => (
+  <section id="인사말" className="py-24 bg-brand-black relative overflow-hidden">
+    <div className="container mx-auto px-6 relative z-10">
+      <div className="max-w-4xl mx-auto">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <span className="text-brand-purple font-bold tracking-widest uppercase mb-4 block">President's Message</span>
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 leading-tight">회원 여러분의 풍부한 경험과<br/>전문지식을 결집하여</h2>
+          
+          <div className="space-y-8 text-gray-300 leading-relaxed text-lg md:text-xl text-left glass-effect p-10 md:p-16 rounded-[40px] border border-white/5 shadow-2xl">
+            <p>한국심리상담지도협회 홈페이지 방문을 진심으로 환영합니다. 협회장입니다.</p>
+            <p>우리 협회는 21세기 급변하는 사회 속에서 현대인들이 겪는 다양한 심리적 고통을 분담하고, 전문적인 상담 지도를 통해 건강한 사회를 구현하기 위해 설립되었습니다.</p>
+            <p>현재 1,000여 명의 상담 전문가들과 함께 지식과 열정을 결집하여, 상담학의 거목으로서 자리매김하고 있습니다. 우리는 단순한 상담을 넘어 개개인의 내면을 치유하고 삶의 가치를 회복하는 파트너가 되고자 합니다.</p>
+            <p>여러분의 발걸음이 헛되지 않도록 최선의 서비스와 전문성을 약속드립니다. 감사합니다.</p>
+            
+            <div className="pt-10 border-t border-white/10 text-right">
+              <p className="text-white font-bold text-2xl tracking-tighter">한국심리상담지도협회 협회장</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
-  );
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-purple/10 rounded-full blur-[120px] pointer-events-none" />
+  </section>
+);
 
-  const AboutPage = () => (
-    <div className="max-w-4xl mx-auto py-20 px-6">
-      <h2 className="text-3xl font-bold mb-10 border-l-4 border-purple-600 pl-4">협회소개</h2>
-      <div className="grid md:grid-cols-2 gap-10">
-        <div>
-          <p className="text-gray-700 leading-loose mb-6">{ASSOCIATION_INFO.about}</p>
-          <div className="bg-purple-50 p-6 rounded-2xl">
-            <h4 className="font-bold text-purple-900 mb-2">비전 및 미션</h4>
-            <p className="text-sm text-purple-800 italic">"전문성과 현장성이 결집된 실용적 기법을 통해 사회적 가치를 실현합니다."</p>
-          </div>
-        </div>
-        <div className="bg-gray-100 rounded-2xl h-64 flex items-center justify-center border-2 border-dashed border-gray-300">
-          <p className="text-gray-400 text-sm">협회 전경 또는 단체 사진 자리</p>
-        </div>
+const AboutAssociation = () => (
+  <section id="협회소개" className="py-24 bg-brand-black">
+    <div className="container mx-auto px-6">
+      <div className="text-center mb-20">
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">협회소개</h2>
+        <div className="w-20 h-1.5 bg-brand-purple mx-auto rounded-full" />
       </div>
-    </div>
-  );
 
-  const GreetingPage = () => (
-    <div className="max-w-4xl mx-auto py-20 px-6">
-      <h2 className="text-3xl font-bold mb-10 border-l-4 border-purple-600 pl-4">인사말</h2>
-      <div className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100">
-        <p className="text-xl font-medium text-gray-800 mb-8 leading-relaxed">"{ASSOCIATION_INFO.greeting}"</p>
-        <div className="border-t pt-8 flex justify-between items-center">
-          <div>
-            <p className="text-gray-500 text-sm italic">사단법인 한국심리상담지도협회</p>
-            <p className="text-lg font-bold mt-1">대표이사 배상</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const HistoryPage = () => (
-    <div className="max-w-4xl mx-auto py-20 px-6">
-      <h2 className="text-3xl font-bold mb-10 border-l-4 border-purple-600 pl-4">연혁</h2>
-      <div className="relative border-l-2 border-gray-200 ml-4 space-y-12 pb-12">
-        {ASSOCIATION_INFO.history.map((item, index) => (
-          <div key={index} className="relative pl-8">
-            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-purple-600 border-4 border-white"></div>
-            <span className="text-purple-600 font-bold text-lg">{item.year}</span>
-            <p className="text-gray-800 text-lg font-medium mt-1">{item.event}</p>
-          </div>
+      <div className="grid md:grid-cols-3 gap-8">
+        {[
+          { icon: Target, title: "협회 미션", desc: "전문 상담 지도자 양성을 통해 국민의 심리적 건강 증진과 행복한 삶을 구현합니다." },
+          { icon: Flag, title: "협회 비전", desc: "글로벌 표준의 상담 교육 시스템을 구축하여 아시아 최고의 심리상담 지도 기관으로 도약합니다." },
+          { icon: ShieldCheck, title: "핵심 가치", desc: "윤리적 전문성, 공감과 포용, 지속적인 연구 개발을 통해 신뢰받는 상담 문화를 선도합니다." }
+        ].map((item, i) => (
+          <motion.div 
+            key={i}
+            whileHover={{ y: -10 }}
+            className="p-10 rounded-[40px] glass-effect border border-white/5 text-center"
+          >
+            <div className="w-20 h-20 rounded-3xl bg-brand-purple/10 flex items-center justify-center mx-auto mb-8 border border-brand-purple/20 text-brand-purple">
+              <item.icon size={40} />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
+            <p className="text-gray-400 leading-relaxed">{item.desc}</p>
+          </motion.div>
         ))}
       </div>
     </div>
-  );
+  </section>
+);
 
-  const AdminPanel = () => (
-    <div className="max-w-7xl mx-auto p-8">
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h2 className="text-3xl font-bold flex items-center gap-2">
-            <LayoutDashboard className="text-purple-600" /> 관리자 대시보드
-          </h2>
-          <p className="text-gray-500 mt-2">대시보드 홈 - 빠른 데이터 입력 및 현황 관리</p>
-        </div>
-        <div className="bg-amber-100 text-amber-700 px-4 py-2 rounded-lg text-sm font-medium">
-          Low on credits - 120 credits remaining
-        </div>
+const HistorySection = () => (
+  <section id="연혁" className="py-24 bg-brand-black">
+    <div className="container mx-auto px-6">
+      <div className="text-center mb-20">
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">협회 연혁</h2>
+        <p className="text-gray-400">한국심리상담지도협회가 걸어온 도전과 열정의 발자취입니다.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <QuickAction title="공지사항 작성" desc="새로운 소식을 게시합니다." icon={<PlusCircle />} color="bg-blue-600" />
-        <QuickAction title="사진 업로드" desc="갤러리 이미지를 추가합니다." icon={<PlusCircle />} color="bg-green-600" />
-        <QuickAction title="상담 내역 등록" desc="수동으로 상담 내역을 기록합니다." icon={<PlusCircle />} color="bg-purple-600" />
-      </div>
-
-      <div className="bg-white rounded-2xl p-8 border border-gray-200">
-        <h3 className="text-xl font-bold mb-4">최근 상담 신청 현황</h3>
-        <div className="space-y-4">
-          {[1,2,3].map(i => (
-            <div key={i} className="flex justify-between items-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition cursor-pointer">
-              <div className="flex gap-4 items-center">
-                <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold">회</div>
-                <div>
-                  <p className="font-bold">상담 예약 신청 - 김OO 님</p>
-                  <p className="text-sm text-gray-500">2024-03-22 14:30</p>
-                </div>
+      <div className="max-w-4xl mx-auto relative">
+        <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-white/10 hidden md:block" />
+        
+        {[
+          { year: "2024", title: "협회 회원 1,000명 돌파", desc: "전국 규모의 상담 지도자 네트워크 구축 및 온라인 상담 플랫폼 강화" },
+          { year: "2021", title: "META-상담 기법 도입", desc: "메타인지 기반의 상담 교육 커리큘럼 개발 및 정부 우수 교육기관 선정" },
+          { year: "2018", title: "국제 심리 심포지엄 개최", desc: "아시아 5개국 전문가 참여 심리 상담 트렌드 및 기법 연구 공유" },
+          { year: "2015", title: "전문 지도자 자격 연수 개시", desc: "체계적인 심리상담사 및 지도자 양성 과정 정식 승인 및 시행" },
+          { year: "2012", title: "한국심리상담지도협회 설립", desc: "심리 상담의 전문화와 대중화를 기치로 공식 출범" }
+        ].map((item, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className={`flex flex-col md:flex-row gap-8 mb-16 relative ${i % 2 === 0 ? 'md:flex-row-reverse' : ''}`}
+          >
+            <div className="hidden md:block absolute left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-brand-purple border-4 border-brand-black z-10" />
+            <div className="md:w-1/2">
+              <div className={`p-8 rounded-[32px] glass-effect border border-white/5 ${i % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
+                <span className="text-3xl font-bold text-brand-purple mb-2 block">{item.year}</span>
+                <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
+                <p className="text-gray-400 leading-relaxed">{item.desc}</p>
               </div>
-              <ChevronRight className="text-gray-400" />
             </div>
-          ))}
-        </div>
+          </motion.div>
+        ))}
       </div>
     </div>
-  );
+  </section>
+);
 
-  const QuickAction = ({ title, desc, icon, color }) => (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition group cursor-pointer">
-      <div className={`${color} text-white w-10 h-10 rounded-lg flex items-center justify-center mb-4`}>
-        {icon}
-      </div>
-      <h4 className="font-bold text-lg group-hover:text-purple-600">{title}</h4>
-      <p className="text-sm text-gray-500 mt-1">{desc}</p>
-    </div>
-  );
+const IntegratedServiceSection = () => {
+  const [formData, setFormData] = useState({ name: '', phone: '', category: '개인 심리 상담', content: '' });
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase.from('consultations').insert([formData]);
+    if (!error) {
+      setSubmitted(true);
+      setFormData({ name: '', phone: '', category: '개인 심리 상담', content: '' });
+      setTimeout(() => setSubmitted(false), 5000);
+    }
+  };
+
+  const programs = [
+    { title: '개인 심리 상담', icon: Users, color: 'bg-purple-500', desc: '내면의 성장을 돕는 일대일 맞춤형 상담입니다.' },
+    { title: '부부 및 가족 상담', icon: Heart, color: 'bg-pink-500', desc: '가족 간의 의사소통을 개선하고 관계를 회복합니다.' },
+    { title: '청소년 상담', icon: BookOpen, color: 'bg-emerald-500', desc: '학업 스트레스와 사춘기 고민을 함께 나눕니다.' },
+    { title: 'META-상담', icon: BarChart3, color: 'bg-blue-500', desc: '메타인지 기반의 접근을 통해 사고를 객관화합니다.' },
+    { title: '드론 우울 상담', icon: Share2, color: 'bg-orange-500', desc: '첨단 기술과 상담을 결합한 혁신적인 치유입니다.' },
+    { title: 'K5(KTDRI)상담', icon: Award, color: 'bg-indigo-500', desc: '표준화된 검사로 성향을 과학적으로 분석합니다.' },
+  ];
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      
-      {!isAdmin ? (
-        <>
-          {currentPage === 'home' && <HomePage />}
-          {currentPage === 'about' && <AboutPage />}
-          {currentPage === 'greeting' && <GreetingPage />}
-          {currentPage === 'history' && <HistoryPage />}
-          {(currentPage === 'program' || currentPage === 'board') && (
-            <div className="py-40 text-center text-gray-400">준비 중인 페이지입니다.</div>
-          )}
-        </>
-      ) : (
-        <AdminPanel />
-      )}
+    <section id="상담신청" className="py-24 bg-brand-black">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">맞춤형 심리 솔루션 & 상담 신청</h2>
+          <p className="text-gray-400">당신에게 가장 적합한 프로그램을 확인하고 그 자리에서 바로 신청하실 수 있습니다.</p>
+        </div>
 
-      {/* 푸터 */}
-      <footer className="bg-slate-900 text-gray-400 py-12 px-6 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4 text-white">
-              <div className="bg-purple-600 p-1.5 rounded">
-                <Users size={16} />
+        <div className="grid lg:grid-cols-2 gap-12 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {programs.map((item, i) => (
+              <motion.div 
+                key={i} 
+                whileHover={{ scale: 1.02 }}
+                className="p-8 rounded-[32px] glass-effect border border-white/5 hover:border-brand-purple/40 transition-all group"
+              >
+                <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mb-6 shadow-lg`}>
+                  <item.icon className="text-white" size={28} />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
+                <p className="text-sm text-gray-400 mb-6 leading-relaxed">{item.desc}</p>
+                <button className="text-sm text-brand-purple font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform">상세보기 <ChevronRight size={16}/></button>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="sticky top-28 glass-effect rounded-[40px] p-8 md:p-12 border border-white/10 shadow-2xl relative">
+            <div className="absolute top-0 left-0 w-full h-1 purple-gradient"></div>
+            <h3 className="text-2xl font-bold text-white mb-2 text-center">빠른 상담 신청</h3>
+            <p className="text-sm text-gray-500 text-center mb-10">내용을 작성해 주시면 전문가가 직접 연락드립니다.</p>
+            
+            {submitted ? (
+              <div className="text-center py-16">
+                <CheckCircle2 className="text-green-500 mx-auto mb-6" size={50} />
+                <h4 className="text-white font-bold text-xl mb-2">신청이 완료되었습니다!</h4>
+                <p className="text-gray-400">빠른 시일 내에 연락드리겠습니다.</p>
               </div>
-              <span className="font-bold">한국심리상담지도협회</span>
-            </div>
-            <p className="text-sm max-w-sm leading-relaxed">
-              본 협회는 심리상담의 전문화와 대중화를 위해 끊임없이 연구하고 실천합니다.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-10">
-            <div>
-              <h5 className="text-white font-bold mb-4">주요메뉴</h5>
-              <ul className="text-sm space-y-2">
-                <li>협회소개</li>
-                <li>프로그램 안내</li>
-                <li>학술연구</li>
-              </ul>
-            </div>
-            <div>
-              <h5 className="text-white font-bold mb-4">고객지원</h5>
-              <ul className="text-sm space-y-2">
-                <li>공지사항</li>
-                <li>상담예약</li>
-                <li>오시는 길</li>
-              </ul>
-            </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <input type="text" placeholder="성함" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-brand-purple" onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <input type="tel" placeholder="연락처" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-brand-purple" onChange={e => setFormData({...formData, phone: e.target.value})} />
+                </div>
+                <select className="w-full bg-brand-dark-gray border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-brand-purple appearance-none cursor-pointer" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                  <option>개인 심리 상담</option>
+                  <option>부부 및 가족 상담</option>
+                  <option>청소년 상담</option>
+                  <option>META-상담</option>
+                  <option>드론 우울 상담</option>
+                  <option>K5(KTDRI)상담</option>
+                </select>
+                <textarea placeholder="상담 문의 내용" required className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white h-36 outline-none focus:border-brand-purple resize-none" onChange={e => setFormData({...formData, content: e.target.value})} />
+                <div className="flex items-center gap-3 ml-1">
+                  <input type="checkbox" id="agree" required className="w-5 h-5 rounded border-white/10 bg-white/5 text-brand-purple focus:ring-brand-purple cursor-pointer" />
+                  <label htmlFor="agree" className="text-sm text-gray-500 cursor-pointer hover:text-gray-400 transition-colors">개인정보 수집 및 이용 동의</label>
+                </div>
+                <button className="w-full py-5 purple-gradient text-white font-bold rounded-2xl shadow-xl hover:opacity-90 transition-all hover:scale-[1.01] text-lg">상담 신청하기</button>
+              </form>
+            )}
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-slate-800 text-xs text-center">
-          © 2024 한국심리상담지도협회. All Rights Reserved.
-        </div>
-      </footer>
-    </div>
+      </div>
+    </section>
   );
 };
 
-export default App;
+const Footer = () => (
+  <footer className="bg-brand-black py-20 border-t border-white/5 text-center">
+    <div className="container mx-auto px-6">
+      <div className="bg-white inline-block p-1 rounded-sm mb-6">
+        <img src="/logo.png" alt="협회 로고" className="h-10 mx-auto opacity-100 transition-opacity" 
+          onError={(e) => e.currentTarget.style.display = 'none'} />
+      </div>
+      <div className="flex justify-center flex-wrap gap-8 mb-10 text-gray-500 text-sm">
+        <a href="#협회소개" className="hover:text-brand-purple transition-colors">협회소개</a>
+        <a href="#인사말" className="hover:text-brand-purple transition-colors">인사말</a>
+        <a href="#연혁" className="hover:text-brand-purple transition-colors">연혁</a>
+        <a href="#상담신청" className="hover:text-brand-purple transition-colors">상담신청</a>
+        <a href="#" className="hover:text-brand-purple transition-colors">개인정보처리방침</a>
+      </div>
+      <p className="text-gray-600 text-xs mb-3 tracking-widest uppercase font-medium">Korea Psychological Counseling Association</p>
+      <p className="text-gray-600 text-xs">© 2026 한국심리상담지도협회. All rights reserved.</p>
+    </div>
+  </footer>
+);
+
+export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }: any) => setUser(session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => setUser(session?.user ?? null));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-brand-black text-white selection:bg-brand-purple/30 scroll-smooth">
+      <Navbar 
+        user={user} 
+        onLogout={() => supabase.auth.signOut()} 
+        isAdminUser={true} // 시연을 위해 관리자 권한을 상시 활성화
+        onAdminClick={() => setIsAdmin(true)}
+      />
+      <main>
+        <Hero />
+        <AboutAssociation />
+        <GreetingsSection />
+        <HistorySection />
+        <IntegratedServiceSection />
+      </main>
+      <Footer />
+
+      <button className="fixed bottom-8 right-8 w-16 h-16 rounded-full purple-gradient text-white shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-40">
+        <MessageCircle size={30} />
+      </button>
+    </div>
+  );
+}
